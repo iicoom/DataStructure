@@ -1,14 +1,24 @@
 /**
  * Created by mxj on 2021/2/18 11:19 上午
+ *
+ * 八种基本数据类型：int、short、float、double、long、boolean、byte、char。
+ *
+ * 包装类分别是：Integer、Short、Float、Double、Long、Boolean、Byte、Character。
+ *
+ * 使用泛型：
+ * 让我们的数据结构可以放置“任何”数据：不能是基本数据类型，只能是类对象
+ *
+ * public class Array<E> 表示Array 存放的数据类型是 E
  */
-public class Array {
+public class Array<E> {
     // 类的成员变量设置为private属性 保护类的封装性
-    private int[] data;
+    private E[] data;
     private int size;
 
-    // 构造函数，传入数组的容量capacity构造Array
+    // 构造函数，传入数组的容量capacity构造Array, 完成对成员变量的赋值
     public Array(int capacity) {
-        data = new int[capacity];
+    //  data = new E[capacity]; // 不能直接这样
+        data = (E[])new Object[capacity]; // Object类是任意类的父类 然后再强制类型转换
         size = 0;
     }
 
@@ -37,13 +47,16 @@ public class Array {
      * @param index 位置
      * @param e 要添加的元素
      */
-    public void add(int index, int e) {
+    public void add(int index, E e) {
 
-        if (size == data.length)
-            throw new IllegalArgumentException("Add failed. Array is full");
+//        if (size == data.length)
+//            throw new IllegalArgumentException("Add failed. Array is full");
 
         if (index < 0 || index > size) // 这里 index > size 保证添加到data的元素是紧密排列的
             throw new IllegalArgumentException("Add failed. Require index >=0 and index <=size");
+
+        if (size == data.length)
+            resize(2 * data.length);
 
         for (int i = size - 1; i >= index; i --) {
             data[i+1] = data[i];
@@ -56,7 +69,7 @@ public class Array {
      * 向data末尾添加元素
      * @param e 添加的目标元素
      */
-    public void push(int e) {
+    public void push(E e) {
         add(size, e);
     }
 
@@ -64,7 +77,7 @@ public class Array {
      * 向data最前面添加元素
      * @param e
      */
-    public void shift(int e) {
+    public void shift(E e) {
         add(0, e);
     }
 
@@ -73,10 +86,18 @@ public class Array {
      * @param index
      * @return
      */
-    int get(int index) {
+    E get(int index) {
         if (index < 0 || index > size)
             throw new IllegalArgumentException("Get failed. index is Illegal");
         return data[index];
+    }
+
+    public E getLast() {
+        return get(size-1);
+    }
+
+    public E getFirst() {
+        return get(0);
     }
 
     /**
@@ -84,7 +105,7 @@ public class Array {
      * @param index
      * @param e
      */
-    void set(int index, int e) {
+    void set(int index, E e) {
         if (index < 0 || index > size)
             throw new IllegalArgumentException("Get failed. index is Illegal");
         data[index] = e;
@@ -95,9 +116,10 @@ public class Array {
      * @param e
      * @return
      */
-    public boolean contains(int e) {
+    public boolean contains(E e) {
         for (int i = 0; i < size; i ++) {
-            if (data[i] == e)
+            // if (data[i] == e) // 之前的值比较要改成引用比较
+            if (data[i].equals(e))
                 return true;
         }
         return false;
@@ -108,9 +130,9 @@ public class Array {
      * @param e
      * @return
      */
-    public int find(int e) {
+    public int find(E e) {
         for (int i = 0; i < size; i ++) {
-            if (data[i] == e)
+            if (data[i].equals(e))
                 return i;
         }
         return -1;
@@ -121,15 +143,20 @@ public class Array {
      * @param index
      * @return
      */
-    public int remove(int index) {
+    public E remove(int index) {
         if (index < 0 || index >= size)
             throw new IllegalArgumentException("Add failed. Require index >=0 and index <=size");
 
-        int ret = data[index];
+        E ret = data[index];
         for (int i = index; i < size - 1; i ++) {
             data[i] = data[i + 1];
         }
         size --;
+        data[size] = null; // loitering object != memory leak
+
+//        if (size == data.length / 2)
+        if (size == data.length / 4 && data.length / 2 != 0)
+            resize(data.length / 2);
         return ret;
     }
 
@@ -137,7 +164,7 @@ public class Array {
      * 删除数组中的第一个元素
      * @return
      */
-    public int unshift() {
+    public E unshift() {
         return remove(0);
     }
 
@@ -145,7 +172,7 @@ public class Array {
      * 删除数组中最后一个元素
      * @return
      */
-    public int pop() {
+    public E pop() {
         return remove(size - 1);
     }
 
@@ -154,7 +181,7 @@ public class Array {
      * 如果data中有重复元素 此方法只会删除第一个e
      * @param e
      */
-    public void removeElement(int e) {
+    public void removeElement(E e) {
         int index = find(e);
         if (index != -1) {
             remove(index);
@@ -174,5 +201,16 @@ public class Array {
         }
         res.append("]");
         return res.toString();
+    }
+
+    /**
+     * data 扩容
+     * @param newCapacity 新容积
+     */
+    private void resize(int newCapacity) {
+        E[] newData = (E[])new Object[newCapacity];
+        for (int i = 0; i < size; i ++)
+            newData[i] = data[i];
+        data = newData;
     }
 }
